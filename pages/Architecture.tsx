@@ -1,21 +1,24 @@
 import React from 'react';
 import { Layers, ArrowRight, Database, Cpu, Server } from 'lucide-react';
 import { LAYERS } from '../constants';
+import { useI18n } from '../i18n';
 
 const Architecture: React.FC = () => {
+  const { t } = useI18n();
+
   return (
     <div className="p-8 space-y-12">
       <div>
-        <h2 className="text-3xl font-bold text-slate-900">System Architecture</h2>
+        <h2 className="text-3xl font-bold text-slate-900">{t('arch.title')}</h2>
         <p className="text-slate-500 mt-2">
-          High-level design of the ModelEngine deployment on Ascend hardware.
+          {t('arch.description')}
         </p>
       </div>
 
       {/* Layered Architecture Diagram */}
       <div className="space-y-4">
         <h3 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
-          <Layers className="text-blue-600" /> Layered View
+          <Layers className="text-blue-600" /> {t('arch.layeredView')}
         </h3>
         <div className="space-y-4 max-w-4xl mx-auto">
           {LAYERS.map((layer, index) => (
@@ -40,7 +43,7 @@ const Architecture: React.FC = () => {
       {/* Process Flow Diagram */}
       <div className="space-y-6">
         <h3 className="text-xl font-semibold text-slate-800 flex items-center gap-2">
-          <Database className="text-blue-600" /> Data & Inference Pipeline
+          <Database className="text-blue-600" /> {t('arch.pipeline')}
         </h3>
         
         <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
@@ -52,8 +55,8 @@ const Architecture: React.FC = () => {
                 <Database className="text-slate-500" />
               </div>
               <div>
-                <h5 className="font-bold text-slate-800">WSI Input</h5>
-                <p className="text-xs text-slate-500">OpenSlide Read</p>
+                <h5 className="font-bold text-slate-800">{t('arch.wsiInput')}</h5>
+                <p className="text-xs text-slate-500">{t('arch.openslide')}</p>
               </div>
             </div>
 
@@ -65,8 +68,8 @@ const Architecture: React.FC = () => {
                 <span className="text-xs font-bold text-indigo-600">Patching</span>
               </div>
               <div>
-                <h5 className="font-bold text-slate-800">Preprocess</h5>
-                <p className="text-xs text-slate-500">Otsu Mask & Cut</p>
+                <h5 className="font-bold text-slate-800">{t('arch.preprocess')}</h5>
+                <p className="text-xs text-slate-500">{t('arch.otsuMask')}</p>
               </div>
             </div>
 
@@ -79,10 +82,10 @@ const Architecture: React.FC = () => {
               </div>
               <div className="relative">
                 <span className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full">
-                  NPU Acceleration
+                  {t('arch.npuAccel')}
                 </span>
-                <h5 className="font-bold text-slate-800">ModelEngine</h5>
-                <p className="text-xs text-slate-500">AIPP + UNI (INT8)</p>
+                <h5 className="font-bold text-slate-800">{t('arch.modelEngine')}</h5>
+                <p className="text-xs text-slate-500">{t('arch.aippUni')}</p>
               </div>
             </div>
 
@@ -94,8 +97,8 @@ const Architecture: React.FC = () => {
                 <Server className="text-green-600" />
               </div>
               <div>
-                <h5 className="font-bold text-slate-800">Aggregation</h5>
-                <p className="text-xs text-slate-500">MIL & Diagnosis</p>
+                <h5 className="font-bold text-slate-800">{t('arch.aggregation')}</h5>
+                <p className="text-xs text-slate-500">{t('arch.milDiagnosis')}</p>
               </div>
             </div>
 

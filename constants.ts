@@ -1,4 +1,4 @@
-import { FileNode, MetricData, ArchitectureLayer } from './types';
+import { FileNode, MetricData, ArchitectureLayer, WorkflowStage, EngineInsight } from './types';
 
 // --- Simulated Performance Data based on Document Targets ---
 export const PERFORMANCE_DATA: MetricData[] = [
@@ -25,6 +25,75 @@ export const LAYERS: ArchitectureLayer[] = [
     description: "Physical compute resources and storage",
     items: ["Ascend 910B NPU", "Kunpeng Servers", "CANN 7.0", "Distributed Storage"],
     color: "bg-slate-100 border-slate-300 text-slate-800"
+  }
+];
+
+export const WORKFLOW_STAGES: WorkflowStage[] = [
+  {
+    key: 'connect',
+    titleKey: 'stage.connect',
+    descKey: 'stage.connect.desc',
+    status: 'ready',
+    eta: '3s'
+  },
+  {
+    key: 'aipp',
+    titleKey: 'stage.aipp',
+    descKey: 'stage.aipp.desc',
+    status: 'pending',
+    eta: '6s'
+  },
+  {
+    key: 'atc',
+    titleKey: 'stage.atc',
+    descKey: 'stage.atc.desc',
+    status: 'pending',
+    eta: '8s'
+  },
+  {
+    key: 'amct',
+    titleKey: 'stage.amct',
+    descKey: 'stage.amct.desc',
+    status: 'pending',
+    eta: '25s'
+  },
+  {
+    key: 'engine',
+    titleKey: 'stage.engine',
+    descKey: 'stage.engine.desc',
+    status: 'pending',
+    eta: '12s'
+  },
+  {
+    key: 'monitor',
+    titleKey: 'stage.monitor',
+    descKey: 'stage.monitor.desc',
+    status: 'pending',
+    eta: 'real-time'
+  }
+];
+
+export const ENGINE_INSIGHTS: EngineInsight[] = [
+  {
+    engine: 'ATC + AIPP',
+    mode: 'Static Shape + Preprocess Offload',
+    speedup: '3.1x',
+    timeTradeoff: '-6% flexibility (shape fixed)',
+    description: 'Compile-time fusion and hardware AIPP remove host preprocessing and reduce DDR trips.'
+  },
+  {
+    engine: 'AMCT INT8 Hybrid',
+    mode: 'Sparse-aware Mixed Precision',
+    speedup: '3.6x',
+    timeTradeoff: '-0.8% accuracy / +12 min calibration',
+    description: 'Attention kept at FP16 while FFN runs INT8; calibration introduces setup overhead but preserves recall.'
+  },
+  {
+    engine: 'ModelEngine Runtime',
+    mode: 'Pipeline + Profiling',
+    speedup: '3.0x',
+    timeTradeoff: '-3% scheduling flexibility',
+    description: 'Batch streaming with profiling traces keeps the 910B saturated while reporting live telemetry.'
   }
 ];
 

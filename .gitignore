@@ -1,0 +1,4 @@
+node_modules/
+ascend-modelengine-dashboard/node_modules/
+dist/
+.DS_Store
