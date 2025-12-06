@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" fill="none">
+  <rect width="1400" height="900" fill="#0b1220"/>
+  <text x="60" y="80" fill="#e6edf3" font-size="36" font-family="Arial" font-weight="bold">Ascend ModelEngine Dashboard (示意图)</text>
+  <text x="60" y="140" fill="#9cd1ff" font-size="24" font-family="Arial">Live telemetry · 阶段提醒 · 加速引擎卡片 · 吞吐量曲线 · 中英双语 UI</text>
+  <rect x="60" y="180" width="320" height="640" rx="12" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="80" y="220" fill="#e6edf3" font-size="22" font-family="Arial">Sidebar / 侧边栏</text>
+  <text x="80" y="260" fill="#8fb5ff" font-size="18" font-family="Arial">• Language toggle / 语言切换</text>
+  <text x="80" y="300" fill="#8fb5ff" font-size="18" font-family="Arial">• Stage nav / 阶段导航</text>
+  <text x="80" y="340" fill="#8fb5ff" font-size="18" font-family="Arial">• Accelerator insights</text>
+  <rect x="420" y="180" width="920" height="200" rx="12" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="440" y="220" fill="#e6edf3" font-size="22" font-family="Arial">Workflow timeline / 流程时间轴</text>
+  <text x="440" y="260" fill="#8fb5ff" font-size="18" font-family="Arial">ATC → AMCT → AIPP → Ascend 推理 → MIL 聚合</text>
+  <text x="440" y="300" fill="#8fb5ff" font-size="18" font-family="Arial">进度提醒 + 当前阶段提示</text>
+  <rect x="420" y="420" width="440" height="180" rx="12" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="440" y="460" fill="#e6edf3" font-size="22" font-family="Arial">NPU Availability / NPU 可用性</text>
+  <text x="440" y="500" fill="#8fb5ff" font-size="18" font-family="Arial">显示 910B 连接、负载、容量</text>
+  <rect x="900" y="420" width="440" height="180" rx="12" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="920" y="460" fill="#e6edf3" font-size="22" font-family="Arial">Accelerator cards / 加速卡片</text>
+  <text x="920" y="500" fill="#8fb5ff" font-size="18" font-family="Arial">ATC/AMCT/AIPP 状态与吞吐提升</text>
+  <rect x="420" y="630" width="920" height="190" rx="12" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="440" y="670" fill="#e6edf3" font-size="22" font-family="Arial">Performance charts / 性能曲线</text>
+  <text x="440" y="710" fill="#8fb5ff" font-size="18" font-family="Arial">吞吐量、时延、精度损失、自由度权衡</text>
+</svg>

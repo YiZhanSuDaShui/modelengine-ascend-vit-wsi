@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" fill="none">
+  <rect width="1400" height="900" fill="#0b1220"/>
+  <text x="60" y="80" fill="#e6edf3" font-size="36" font-family="Arial" font-weight="bold">Pipeline Stages (示意图)</text>
+  <text x="60" y="130" fill="#9cd1ff" font-size="22" font-family="Arial">ATC 整图下沉 → AMCT 混合精度量化 → AIPP 预处理 → AscendCL 推理 → MIL 后处理</text>
+  <rect x="60" y="180" width="1280" height="120" rx="16" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="80" y="230" fill="#8fb5ff" font-size="20" font-family="Arial">Stage reminders / 阶段提醒 · 每个阶段显示准备、运行、完成状态和耗时</text>
+  <rect x="60" y="340" width="620" height="450" rx="16" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="80" y="380" fill="#e6edf3" font-size="22" font-family="Arial">Live monitoring / 实时监控</text>
+  <text x="80" y="420" fill="#8fb5ff" font-size="18" font-family="Arial">• 模型路径、输入尺寸、batch size</text>
+  <text x="80" y="460" fill="#8fb5ff" font-size="18" font-family="Arial">• 当前加速引擎（ATC/AMCT/AIPP）</text>
+  <text x="80" y="500" fill="#8fb5ff" font-size="18" font-family="Arial">• 吞吐与时延变化</text>
+  <rect x="720" y="340" width="620" height="450" rx="16" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="740" y="380" fill="#e6edf3" font-size="22" font-family="Arial">Trade-off view / 权衡视图</text>
+  <text x="740" y="420" fill="#8fb5ff" font-size="18" font-family="Arial">速度提升 vs. 时间自由度损耗，以提示优化空间</text>
+</svg>

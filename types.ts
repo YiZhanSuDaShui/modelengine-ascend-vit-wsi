@@ -13,6 +13,24 @@ export interface MetricData {
   accuracy: number;
 }
 
+export type StageStatus = 'ready' | 'running' | 'pending' | 'blocked' | 'done';
+
+export interface WorkflowStage {
+  key: string;
+  titleKey: string;
+  descKey: string;
+  status: StageStatus;
+  eta?: string;
+}
+
+export interface EngineInsight {
+  engine: string;
+  mode: string;
+  speedup: string;
+  timeTradeoff: string;
+  description: string;
+}
+
 export interface ArchitectureLayer {
   title: string;
   description: string;

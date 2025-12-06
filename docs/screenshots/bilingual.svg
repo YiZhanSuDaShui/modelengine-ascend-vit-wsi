@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" fill="none">
+  <rect width="1400" height="900" fill="#0b1220"/>
+  <text x="60" y="80" fill="#e6edf3" font-size="36" font-family="Arial" font-weight="bold">Bilingual UI (示意图)</text>
+  <rect x="60" y="140" width="1280" height="180" rx="16" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="80" y="190" fill="#e6edf3" font-size="22" font-family="Arial">Language toggle / 语言切换</text>
+  <text x="80" y="230" fill="#8fb5ff" font-size="18" font-family="Arial">中英文标签、导航、卡片标题同步切换</text>
+  <rect x="60" y="360" width="620" height="420" rx="16" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="80" y="400" fill="#e6edf3" font-size="22" font-family="Arial">English layout preview</text>
+  <text x="80" y="440" fill="#8fb5ff" font-size="18" font-family="Arial">完整界面、指标、提示</text>
+  <rect x="720" y="360" width="620" height="420" rx="16" fill="#111a2d" stroke="#2d72d2" stroke-width="3"/>
+  <text x="740" y="400" fill="#e6edf3" font-size="22" font-family="Arial">中文界面预览</text>
+  <text x="740" y="440" fill="#8fb5ff" font-size="18" font-family="Arial">翻译内容与左侧同步</text>
+</svg>
