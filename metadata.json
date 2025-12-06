@@ -1,0 +1,5 @@
+{
+  "name": "Ascend ModelEngine Dashboard",
+  "description": "A visualization dashboard for the UNI ViT Pathological Model Inference Acceleration on Ascend NPU.",
+  "requestFramePermissions": []
+}
