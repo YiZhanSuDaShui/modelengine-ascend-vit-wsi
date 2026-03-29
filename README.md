@@ -1,811 +1,379 @@
 # 华为昇腾 BACH 病例分类加速项目
 
-本仓库用于华为 ICT 大赛创新赛赛题三的最终收口与交付，当前已经把项目冻结为一套可复现、可解释、可部署的 `before / after` 双模型方案。
+<div align="center">
 
-如果你只想知道“现在到底交什么、怎么部署、怎么跑”，优先看本文。  
-如果你想看全过程、历史实验、训练与评测关系、为什么会这样设计，请继续看 [README-process.md](/home/ma-user/work/uni_run/README-process.md)。
+面向华为 ICT 大赛创新赛赛题三的 `before / after` 双模型加速交付仓库
 
-## 0. 2026-03-27 最新口径
+<br/>
 
-本节优先级高于下文旧收口描述；若后文仍出现 `origin OM` 作为正式 after，请以这里为准。
+![Contest](https://img.shields.io/badge/Contest-Huawei%20ICT%20Competition-C70039?style=for-the-badge&logo=huawei&logoColor=white)
+![Task](https://img.shields.io/badge/Task-WSI%20Multi--label%20Classification-0A66C2?style=for-the-badge&logo=googledocs&logoColor=white)
+![After](https://img.shields.io/badge/Formal%20After-mixed%20OM%20attn__score__path__norm1-2DA44E?style=for-the-badge)
+![Speedup](https://img.shields.io/badge/Speedup-6.2441x-F59E0B?style=for-the-badge)
+![ExactMatch](https://img.shields.io/badge/Proxy%20ExactMatch-1.0-6F42C1?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Deliverable-238636?style=for-the-badge)
 
-### 0.1 当前推荐交付
+[![分析总表](https://img.shields.io/badge/分析总表-analyse.md-0969DA?style=flat-square)](./analyse.md)
+[![过程文档](https://img.shields.io/badge/过程文档-README--process.md-8250DF?style=flat-square)](./README-process.md)
+[![部署说明](https://img.shields.io/badge/部署说明-模型部署步骤说明-1F6FEB?style=flat-square)](./天津工业大学+我们能拿奖/模型部署步骤说明/模型部署步骤说明.md)
+[![最小运行包](https://img.shields.io/badge/最小运行包-data--set--minimal.tar.gz-2DA44E?style=flat-square)](./data-set-minimal.tar.gz)
 
-- 主任务：`WSI 多标签分类`
-- `before`：
-  - `PyTorch eager`
-  - 同一 `checkpoint / 切块参数 / 阈值 / 聚合逻辑 / 输出结构`
-  - 对应速度基线目录：`logs/A3_output/submission_closure/optimization_rounds/wsi/01_before_plain_pytorch/`
-- `after` 主提交：
-  - `mixed OM(attn_score_path_norm1) + ACL sync + prefetch + persistent_workers + pin_memory + manifest cache`
-  - 默认 after 工件已切到该 mixed OM
-  - 对应整链路实测目录：`logs/A3_output/submission_closure/optimization_rounds/wsi/07_after_om_mixed_attn_score_path_norm1/`
-- `after` 保守回退：
-  - `origin OM`
-  - 对应目录：`logs/A3_output/submission_closure/optimization_rounds/wsi/04_after_om_acl_sync/`
-- 轻量化候选：
-  - `5%` 结构化剪枝模型
-  - 当前最优权重：`logs/A3_output/submission_closure/optimization_stepwise/05_structured_prune/models/prune_ratio_0p05_v3_long_e10/best_pruned.pt`
-  - 已完成 `ONNX/OM` 导出、`OM` 对齐、`A01~A10` 代理复核、官方无标签整目录测速
-  - 官方整目录实测：`29.4291s / 77.8141 tiles/s / 0.339799 WSI/s`
-  - 本地代理：`exact_match = 1.0`，`macro_f1 = 0.933333`
-  - 结论：精度达标，但仍比当前正式 `mixed OM` 慢 `16.50%`，暂不替代正式 after
+</div>
 
-### 0.2 当前最关键数据
+## 项目简介
 
-#### A1 纯推理基线
-
-- FP32 最优：`bs=48`，`427.6829 patch/s`，`2.3382 ms/patch`
-- FP16(AMP) 最优：`bs=96`，`972.8688 patch/s`，`1.0279 ms/patch`
-- FP16 相对 FP32 纯前向加速：`2.2747x`
-
-#### A2 Photos 端到端链路
-
-- 基线：`overall_tile_s = 407.0671`，`steady_tile_s = 432.2236`
-- 第一轮最优 sweep：`w16_pf4_bs96`，`steady_tile_s = 471.8586`
-- v3 最优 sweep：`w4_pf6_bs96`，`overall_tile_s = 440.46`，`steady_tile_s = 571.21`
-- 结论：A2 的主要收益来自 CPU 侧读图/预处理/预取优化，而不是单纯继续堆 NPU 前向
-
-#### A3 WSI 正式 before/after
-
-| 口径 | 总耗时(s) | WSI/s | tiles/s | 本地代理 exact_match | 本地代理 macro_f1 |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| before PyTorch | 157.7303 | 0.063399 | 14.5185 | 1.0000 | 0.933333 |
-| after origin OM | 27.6070 | 0.362226 | 82.9499 | 1.0000 | 0.933333 |
-| after mixed OM | 25.2606 | 0.395874 | 90.6551 | 1.0000 | 0.933333 |
-
-- mixed OM 相对 before：
-  - 加速比：`6.2441x`
-  - 总耗时下降：`83.9850%`
-- mixed OM 相对 origin OM：
-  - 额外加速：`1.0929x`
-  - 总耗时再下降：`8.4995%`
-- mixed OM 与 origin OM 在官方 10 张无标签测试 WSI 上最终 `pred_labels`：`10/10` 完全一致
-
-#### A4 高级优化现状
-
-- ONNX：
-  - `feature_cosine_mean = 1.0`
-  - `prob_max_abs_diff = 8.64e-07`
-- origin OM：
-  - `feature_cosine_mean = 0.9999753`
-  - `prob_max_abs_diff = 0.0043112`
-- mixed OM `attn_score_path_norm1`：
-  - patch 级 bench：`514.8922 patch/s`
-  - 真实 tile 对齐：`feature_cosine_mean = 0.9999683`
-  - WSI 本地代理：`exact_match = 1.0`，`macro_f1 = 0.933333`
-- 5% 结构化剪枝：
-  - 最优 epoch：`5`
-  - `acc = 0.9189944`
-  - `macro_f1 = 0.8391020`
-  - `ONNX` 对齐：`feature_cosine_mean = 1.0`
-  - `OM(origin)` 对齐：`feature_cosine_mean = 0.9999768`，`prob_max_abs_diff = 0.0061094`
-  - 官方整目录：`29.4291s`，`77.8141 tiles/s`
-  - 本地代理：`exact_match = 1.0`，`macro_f1 = 0.933333`
-  - 相对原始大模型：
-    - `acc` 提升约 `0.279` 个百分点
-    - `macro_f1` 下降约 `0.221` 个百分点
-  - 相对当前正式 `mixed OM`：
-    - 官方整目录总耗时慢 `16.50%`
-    - 官方 10 张无标签测试 WSI 最终 `pred_labels` 仅 `7/10` 与 mixed 一致
-  - 当前不替代正式 `mixed OM`，保留为“轻量化但未获最快速度”的备选链
-- 10% 结构化剪枝：
-  - `macro_f1` 下降约 `1.240` 个百分点，略高于 `<1%` 目标
-- 蒸馏 student：
-  - `acc = 0.7681564`
-  - `macro_f1 = 0.4017274`
-  - 当前不适合主提交
-- AIPP / INT8 量化：
-  - 仍属于预研
-  - 当前仓库内没有可直接提交的正式 AIPP 下沉链和 PTQ/QAT 最终产物
-
-#### 外部 BRACS 20 张多标签验证
-
-- 真值来源：
-  - `BRACS Summary File.xlsx + ROI 类型折叠`
-  - 多标签口径：
-    - `Normal = N`
-    - `Benign = PB/UDH`
-    - `InSitu = FEA/ADH/DCIS`
-    - `Invasive = IC`
-- 默认正式阈值：
-  - before/after 都是 `exact_match = 0.30`
-  - before/after 都是 `macro_f1 = 0.6883`
-- 在同一批 `20` 张外部 WSI 上做阈值搜索后：
-  - before/after 都可到 `exact_match = 0.45`
-  - before/after 都可到 `macro_f1 = 0.8551`
-- 速度：
-  - before：`19.2022 tiles/s`
-  - after：`21.0633 tiles/s`
-  - after 额外提速：`9.69%`
-- 说明：
-  - tuned 阈值只作为外部分析参考
-  - 不直接替换正式提交阈值 JSON
-
-### 0.3 一条命令怎么跑
-
-#### after
-
-当前默认 after 已经切到推荐 mixed OM，所以直接执行：
-
-```bash
-python src/A3/scripts/run_submission_infer.py \
-  --task wsi \
-  --variant after \
-  --backend om \
-  --input_dir input \
-  --out_dir output_after \
-  --save_features
-```
-
-#### before
-
-```bash
-python src/A3/scripts/run_submission_infer.py \
-  --task wsi \
-  --variant before \
-  --backend pytorch \
-  --input_dir input \
-  --out_dir output_before \
-  --save_features
-```
-
-#### 输入输出约定
-
-- 输入目录支持：`.svs / .tif / .tiff`
-- 输出结构固定为：
-  - `out_dir/features/`
-  - `out_dir/manifests/`
-  - `out_dir/predictions/slide_predictions.csv`
-  - `out_dir/reports/run_summary.json`
-
-### 0.4 该看哪些说明文件
-
-- 汇总分析：`analyse.md`
-- 长过程记录：`README-process.md`
-- 赛题约束理解：`赛题三具体评测要求（必看）.md`
-
-### 0.5 已准备好的迁移包
-
-- 最小可运行目录：
-  - `/home/ma-user/work/uni_run/tmp/data-set`
-- 已打包压缩文件：
-  - `/data/demo/data-set.tar`
-- 目标机推荐落点：
-  - `/home/modellite/workspace/data-set`
-- 目录内已包含：
-  - `README_DEPLOY.md`
-  - `install_requirements.sh`
-  - `env_check.sh`
-  - `run_before.sh`
-  - `run_after.sh`
-
-## 1. 最终结论
-
-### 1.1 当前正式交付口径
-
-- 主任务：`WSI 多标签分类`
-- `before`：
-  - 同一任务
-  - 同一输入输出口径
-  - 同一切块参数
-  - 同一阈值文件
-  - 同一聚合逻辑
-  - 编码器执行后端为 `PyTorch eager`
-- `after`：
-  - 与 `before` 完全同任务、同输入输出
-  - 只替换编码器执行后端，不改变切块、阈值、聚合、输出 schema
-  - 当前正式 after 选型为：
-    - `mixed OM(attn_score_path_norm1) + ACL sync + prefetch + persistent_workers + pin_memory + manifest cache`
-    - 对应轮次目录：`logs/A3_output/submission_closure/optimization_rounds/wsi/07_after_om_mixed_attn_score_path_norm1/`
-  - 保守回退 after：
-    - `OM(origin)`
-    - 对应目录：`logs/A3_output/submission_closure/optimization_rounds/wsi/04_after_om_acl_sync/`
-  - 轻量化候选 after：
-    - `5%` 结构化剪枝 `OM(origin)`
-    - 对应目录：`logs/A3_output/submission_closure/optimization_stepwise/05_structured_prune/official_runs/prune_ratio_0p05_v3_long_e10/`
-
-### 1.2 当前最重要的结果
-
-- WSI 正式 after 全流程速度：
-  - `90.655053 tiles/s`
-  - `0.395874 WSI/s`
-  - 结果文件：`logs/A3_output/submission_closure/optimization_rounds/wsi/07_after_om_mixed_attn_score_path_norm1/run/reports/run_summary.json`
-- WSI 本地代理评测：
-  - `before exact_match = 1.0`
-  - `after exact_match = 1.0`
-  - `before macro_f1 = 0.933333`
-  - `after macro_f1 = 0.933333`
-  - 精度损失：`0.0` 个百分点
-- 5% 结构化剪枝候选：
-  - 官方整目录：`29.429120s`，`77.814085 tiles/s`，`0.339799 WSI/s`
-  - 相对 before：`5.3597x` 加速，总耗时下降 `81.3421%`
-  - 相对 mixed OM：总耗时慢 `16.50%`
-  - 本地代理：`exact_match = 1.0`，`macro_f1 = 0.933333`，精度变化 `0.0` 个百分点
-  - 官方 10 张无标签测试 WSI 最终 `pred_labels` 与 mixed OM：`7/10` 一致
-- WSI 离线模型对齐：
-  - ONNX：`feature_cosine_mean = 1.0`
-  - OM(origin)：`feature_cosine_mean = 0.999975323677063`
-  - prune5 ONNX：`feature_cosine_mean = 1.0`
-  - prune5 OM(origin)：`feature_cosine_mean = 0.9999767541885376`
-  - 当前正式 after 仍以 `mixed OM` 为主，`origin OM` 与 prune5 OM 作为回退/候选
-
-### 1.3 需要特别记住的口径
-
-- 官方 `TestDataset` 无标签，只能做：
-  - 真正的推理速度测试
-  - 最终预测结果输出
-  - 特征文件导出
-- 官方 `TestDataset` 不能做真实 ACC。
-- `thumbnails` 只能人工观察，不能当真值。
-- 当前 `Photos after = 0.945 ACC` 这一组结果只能作为“离线后端可运行的补充代理结果”，不能直接当成严格配对的 before/after 精度对比结论。
-
-## 2. 数据、训练、评测三条线
-
-## 2.1 数据角色
-
-- `Photos`
-  - 400 张带四分类标签的 `.tif`
-  - 主要用于训练和验证 patch encoder
-- `WSI A01~A10 + XML`
-  - 有标注
-  - 用于生成 tile 级训练清单与 slide 级多标签
-  - 用于本地代理评测
-- `官方 TestDataset`
-  - 无标签
-  - 只用于测速和导出最终预测
-
-## 2.2 当前正式 WSI 训练链路
-
-当前正式 WSI 主线不是“5 个 encoder 训练后再融合成 1 个”，而是：
-
-1. 用 `A01~A10 + XML` 生成 tile 清单  
-   文件：`data/BACH/derived/split/wsi_train_tiles_L1_s448_mt40.csv`
-2. 用同一批 tile 做 `random_tile` 切分  
-   口径：`val_ratio = 0.1`
-3. 训练 1 个 WSI patch encoder  
-   目录：`logs/A3_output/C_phase/stage1p5_uni_large_L1_s448_mt40_random_v1/`
-4. 在 `epoch 1~5` 中按 `macro_f1` 选最优  
-   当前最佳是 `epoch 4`
-5. 保存为 1 个正式 checkpoint  
-   文件：`logs/A3_output/C_phase/stage1p5_uni_large_L1_s448_mt40_random_v1/best.pt`
-6. 用这 1 个 encoder 去提 WSI 特征
-7. 再在 slide 层做 5 折代理评测、搜阈值、算 exact_match / macro_f1
-
-这里最容易混淆的一点是：
-
-- `epoch`：同一个模型训练了第几轮
-- `fold`：数据怎么切训练/验证
-- `slide`：一张整张病理大图样本
-
-当前正式 WSI encoder 是：
-
-- `1 次训练`
-- `5 个 epoch 里选 1 个最优状态`
-- 最后只保留 `1 个 best.pt`
-
-不是：
-
-- `5 折训练 5 个 encoder`
-- 再把 5 个 encoder 合并成 1 个
-
-## 2.3 为什么 WSI 5 折结果能是 1.0
-
-当前 WSI `exact_match = 1.0` 的含义是：
-
-- 在本地代理评测口径下
-- 用 `A01~A10` 的 slide 级标签做 5 折阈值搜索与验证
-- before 和 after 的最终 slide 标签 10/10 一致
-
-它不等于“官方外部测试集真实 100% ACC”，原因是：
-
-- 官方测试集没有标签
-- 当前 WSI encoder 训练时，正式 checkpoint 用到的 tile 清单来自 `A01~A10`
-- 因此这组结果只能被诚实写成：
-  - `本地代理评测结果`
-  - 不能写成 `官方测试集真实 ACC`
-
-更详细的解释见 [README-process.md](/home/ma-user/work/uni_run/README-process.md) 末尾新增补充章节。
-
-## 3. 当前正式模型与关键文件
-
-### 3.1 WSI 主线
-
-- 正式 encoder checkpoint：
-  - `logs/A3_output/C_phase/stage1p5_uni_large_L1_s448_mt40_random_v1/best.pt`
-- 正式阈值：
-  - `logs/A3_output/E_phase/tileagg_thresholds_L1_s448_uniStage1p5_v1.json`
-- ONNX：
-  - `logs/A3_output/submission_closure/offline_models/wsi/wsi_patch_encoder_bs64.onnx`
-- 正式 OM：
-  - `logs/A3_output/submission_closure/offline_models/wsi/wsi_patch_encoder_bs64_origin.om`
-- OM Meta：
-  - `logs/A3_output/submission_closure/offline_models/wsi/wsi_patch_encoder_bs64_origin.meta.json`
-
-### 3.2 Photos 补充链路
-
-- 严格 before 5 折代理评测：
-  - `logs/A3_output/submission_closure/proxy_eval/photos_before_pytorch_strict_cv/`
-- 补充型 after 代理评测：
-  - `logs/A3_output/submission_closure/proxy_eval/photos_after_om_origin/`
-
-### 3.3 不采用的离线工件
-
-- `wsi_patch_encoder_bs64.om`
-  - 旧 `fp16 OM`
-  - 速度高，但数值出现 `NaN`
-  - 不作为正式提交件
-- `mixed_float16 OM`
-  - 只保留编译尝试，不作为正式提交件
-
-## 4. 部署迁移说明
-
-## 4.1 最小可运行迁移树
-
-推荐的最小迁移目录如下：
-
-```text
-<你的根目录>/
-├── README.md
-├── README-process.md
-├── 赛题三具体评测要求（必看）.md
-├── src/
-│   └── A3/
-├── _vendor/
-├── logs/
-│   └── A3_output/
-│       ├── C_phase/
-│       │   └── stage1p5_uni_large_L1_s448_mt40_random_v1/
-│       │       └── best.pt
-│       ├── E_phase/
-│       │   └── tileagg_thresholds_L1_s448_uniStage1p5_v1.json
-│       └── submission_closure/
-│           └── offline_models/
-│               └── wsi/
-│                   ├── wsi_patch_encoder_bs64_origin.om
-│                   ├── wsi_patch_encoder_bs64_origin.meta.json
-│                   ├── wsi_patch_encoder_bs64.onnx
-│                   └── wsi_patch_encoder_bs64.meta.json
-├── input/
-├── output_before/
-└── output_after/
-```
+本仓库不是单一训练脚本仓，而是一个**比赛收口仓**：当前可直接运行的核心代码集中在 [`src/A3/`](./src/A3/)，A1/A2/A4 的实验结论、测速、对齐和提交材料主要沉淀在 [`logs/A3_output/`](./logs/A3_output/) 与各类报告中。
 
 补充说明：
 
-- 根目录名字可以不是 `data-set`。
-- 可以叫：
-  - `/home/modellite/workspace/dataset`
-  - `/home/modellite/workspace/data-set`
-  - 任何别的名字
-- 关键不是目录名，而是内部相对结构要保持一致。
+- 原始训练/测试数据目录（如 `data/BACH/...`）不随当前仓库一并上传，README 中这类路径只用于说明历史数据来源
+- 可直接迁移运行的完整目录结构，已经打包在 [`data-set-minimal.tar.gz`](./data-set-minimal.tar.gz) 和最终交付目录中
 
-## 4.2 当前已经同步到 `/data/demo` 的内容
+当前正式交付口径已经统一为：
 
-当前挂载目录内已经准备好一份最小运行包：
+- `before`：`PyTorch eager`
+- `after`：`mixed OM(attn_score_path_norm1) + ACL sync + prefetch + persistent_workers + pin_memory + manifest cache`
+- 主任务：`WSI 多标签分类`
+- 默认统一入口：[`src/A3/scripts/run_submission_infer.py`](./src/A3/scripts/run_submission_infer.py)
 
-- `/home/ma-user/work/uni_run/tmp/data-set/`
-- `/data/demo/data-set/`
-- `/data/demo/data-set.tar`
+如果你只想知道“现在交什么、怎么跑、数据怎么看”，看这份 README 即可。  
+如果你想追溯完整过程、历史实验和每轮收口依据，请看 [`README-process.md`](./README-process.md)。
 
-如果你直接在 `/data/demo/data-set` 下跑，不需要自己重新拼目录。
+## 结果总览
 
-## 4.3 一键安装依赖
+### 当前正式 before / after
 
-进入部署根目录后执行：
+| 方案 | 编码器后端 | 总耗时(s) | WSI/s | tiles/s | 本地代理 exact_match | 本地代理 macro_f1 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| before | PyTorch eager | 157.7303 | 0.063399 | 14.5185 | 1.0000 | 0.933333 |
+| after 主提交 | mixed OM `attn_score_path_norm1` | 25.2606 | 0.395874 | 90.6551 | 1.0000 | 0.933333 |
+| after 回退 | origin OM | 27.6070 | 0.362226 | 82.9499 | 1.0000 | 0.933333 |
+
+### 关键结论
+
+- 当前正式 `after` 相对 `before` 加速 `6.2441x`
+- 总耗时从 `157.7303s` 降到 `25.2606s`
+- 本地代理评测 `exact_match = 1.0`、`macro_f1 = 0.933333`
+- `mixed OM` 与 `origin OM` 在官方 `10` 张无标签测试 `WSI` 上最终 `pred_labels` 为 `10/10` 完全一致
+- `mixed OM` 已经不只是 patch 级候选，而是完成了端到端测速、代理评测和提交闭环的正式主线
+
+### 当前备选链
+
+| 方案 | 定位 | 总耗时(s) | 结论 |
+| --- | --- | ---: | --- |
+| `origin OM` | 保守回退链 | 27.6070 | 精度口径稳定，但速度略慢于 mixed OM |
+| `5%` 结构化剪枝 `OM(origin)` | 轻量候选链 | 29.4291 | 精度达标，但仍比 mixed OM 慢 `16.50%`，暂不替代正式 after |
+
+## 快速开始
+
+### 1. 安装依赖
 
 ```bash
-cd /home/modellite/workspace/data-set
 python3 -m pip install -r src/A3/requirements.txt
-```
-
-## 4.4 环境自检
-
-### before 自检
-
-```bash
-python3 -c "import torch; print('torch ok')"
-python3 -c "import torch_npu; print('torch_npu ok')"
-```
-
-### after 自检
-
-```bash
-python3 -c "import acl; print('acl ok')"
-```
-
-### WSI 读图自检
-
-```bash
-python3 -c "import openslide; print('openslide ok')"
 ```
 
 说明：
 
-- `before` 依赖 `torch_npu`
-- `after` 依赖 `acl`
-- `openslide` 如果缺失，代码会尽量走 `_vendor + tiffslide` 回退
+- `after` 的 `.om` 推理需要目标机已正确安装 `CANN` 运行时，且 `python3 -c "import acl"` 可执行
+- `before` 若走昇腾 `PyTorch/NPU` 路径，需要环境中存在与当前环境匹配的 `torch_npu`
+- 如目标机缺少系统级 `OpenSlide`，建议直接使用最小运行包；该包内置 `_vendor/`，可提供 `tiffslide` 回退读图能力
 
-## 4.5 输入文件格式
+### 2. 直接运行统一入口
 
-当前 WSI 统一入口已经支持：
-
-- `.svs`
-- `.tif`
-- `.tiff`
-- 大小写混合后缀也支持，例如：
-  - `.SVS`
-  - `.TIF`
-  - `.TIFF`
-
-也就是说，你现在可以把待测 WSI 放到：
-
-```text
-<你的根目录>/input/
-├── sample01.svs
-├── sample02.tif
-└── sample03.tiff
-```
-
-脚本会自动扫描这些文件。
-
-## 4.6 一键运行命令
-
-建议先设置根目录变量：
+#### before
 
 ```bash
-export ROOT=/home/modellite/workspace/data-set
-cd $ROOT
-```
-
-### before
-
-```bash
-python3 $ROOT/src/A3/scripts/run_submission_infer.py \
+python3 src/A3/scripts/run_submission_infer.py \
   --task wsi \
   --variant before \
   --backend pytorch \
-  --input_dir $ROOT/input \
-  --out_dir $ROOT/output_before \
+  --input_dir ./input \
+  --out_dir ./output/before \
   --save_features
 ```
 
-### after
+#### after
 
 ```bash
-python3 $ROOT/src/A3/scripts/run_submission_infer.py \
+python3 src/A3/scripts/run_submission_infer.py \
   --task wsi \
   --variant after \
   --backend om \
-  --input_dir $ROOT/input \
-  --out_dir $ROOT/output_after \
+  --input_dir ./input \
+  --out_dir ./output/after \
   --save_features
 ```
 
-如果你的根目录不是 `data-set`，只改 `ROOT` 就行。
+### 3. 输入输出约定
 
-## 4.7 输出结构
+- 输入目录：`input/`
+- 支持格式：`.svs`、`.tif`、`.tiff`
+- 输出目录默认为：
+  - `before`：`output/before/`
+  - `after`：`output/after/`
 
-### WSI 输出
+每次运行后会生成：
+
+- `features/`
+- `manifests/`
+- `predictions/slide_predictions.csv`
+- `reports/run_summary.json`
+- `reports/per_slide_timing.csv`
+
+## 当前正式口径
+
+### 正式提交链
+
+- `before`
+  - 统一任务、统一切块、统一阈值、统一聚合逻辑
+  - 只保留 `PyTorch eager` 作为基线后端
+- `after`
+  - 与 `before` 完全同任务、同输入输出、同阈值、同聚合逻辑
+  - 只替换编码器执行后端和工程化运行方式
+  - 当前正式工件已切到 `mixed OM(attn_score_path_norm1)`
+
+### 当前主线对应文件
+
+- 正式 checkpoint：
+  - [`logs/A3_output/C_phase/stage1p5_uni_large_L1_s448_mt40_random_v1/best.pt`](./logs/A3_output/C_phase/stage1p5_uni_large_L1_s448_mt40_random_v1/best.pt)
+- 正式阈值：
+  - [`logs/A3_output/E_phase/tileagg_thresholds_L1_s448_uniStage1p5_v1.json`](./logs/A3_output/E_phase/tileagg_thresholds_L1_s448_uniStage1p5_v1.json)
+- 正式 mixed OM：
+  - [`logs/A3_output/submission_closure/optimization_stepwise/01_mixed_float16_keep_dtype_modify_mixlist/artifacts/refined_attn_score_path_norm1/wsi_attn_score_path_norm1.om`](./logs/A3_output/submission_closure/optimization_stepwise/01_mixed_float16_keep_dtype_modify_mixlist/artifacts/refined_attn_score_path_norm1/wsi_attn_score_path_norm1.om)
+- 正式 mixed OM 元信息：
+  - [`logs/A3_output/submission_closure/optimization_stepwise/01_mixed_float16_keep_dtype_modify_mixlist/artifacts/refined_attn_score_path_norm1/wsi_attn_score_path_norm1.meta.json`](./logs/A3_output/submission_closure/optimization_stepwise/01_mixed_float16_keep_dtype_modify_mixlist/artifacts/refined_attn_score_path_norm1/wsi_attn_score_path_norm1.meta.json)
+- 正式 after 实测结果：
+  - [`logs/A3_output/submission_closure/optimization_rounds/wsi/07_after_om_mixed_attn_score_path_norm1/run/reports/run_summary.json`](./logs/A3_output/submission_closure/optimization_rounds/wsi/07_after_om_mixed_attn_score_path_norm1/run/reports/run_summary.json)
+- 当前默认工件选择逻辑：
+  - [`src/A3/bach_mil/runtime/submission_defaults.py`](./src/A3/bach_mil/runtime/submission_defaults.py)
+
+### 主线结论的事实来源
+
+- 结果汇总：[`analyse.md`](./analyse.md)
+- 过程总文档：[`README-process.md`](./README-process.md)
+- mixed OM 正式测速目录：[`logs/A3_output/submission_closure/optimization_rounds/wsi/07_after_om_mixed_attn_score_path_norm1/`](./logs/A3_output/submission_closure/optimization_rounds/wsi/07_after_om_mixed_attn_score_path_norm1/)
+- mixed OM 代理评测目录：[`logs/A3_output/submission_closure/proxy_eval/wsi_mixed_om_attn_score_path_norm1_cv/`](./logs/A3_output/submission_closure/proxy_eval/wsi_mixed_om_attn_score_path_norm1_cv/)
+
+## 仓库怎么读
+
+### 如果你是第一次看这个仓库
+
+1. 先看本 README，确定当前正式交付口径
+2. 再看 [`analyse.md`](./analyse.md)，快速了解 A1~A4 的关键数据
+3. 如需追溯历史过程，再看 [`README-process.md`](./README-process.md)
+4. 如需迁移到服务器运行，看 [`模型部署步骤说明.md`](./天津工业大学+我们能拿奖/模型部署步骤说明/模型部署步骤说明.md)
+
+### 当前目录分工
 
 ```text
-output_before/ 或 output_after/
-├── features/
-│   └── *.pt
-├── manifests/
-│   └── *_manifest.csv
-├── predictions/
-│   └── slide_predictions.csv
-└── reports/
-    ├── per_slide_timing.csv
-    └── run_summary.json
+.
+├── src/
+│   └── A3/                         # 当前可直接运行的主线代码
+├── logs/
+│   ├── A3_output/                  # A3/A4 主线权重、测速、对齐、报告
+│   └── sweep_v3/                   # A2 端到端吞吐 sweep 日志
+├── 天津工业大学+我们能拿奖/          # 最终交付材料汇总目录
+│   ├── 模型部署步骤说明/
+│   ├── 思路和过程报告/
+│   └── 最小可运行模型/
+├── analyse.md                     # A1~A4 关键数据总表
+├── README-process.md              # 过程型长文档
+├── data-set-minimal.tar.gz        # 根目录最小运行包
+└── 赛题三具体评测要求（必看）.md     # 赛题约束理解
 ```
 
-其中：
+## A1 ~ A4 阶段摘要
 
-- `features/*.pt`
-  - 每张 WSI 的 tile 特征与 tile 概率
-- `manifests/*_manifest.csv`
-  - 每张 WSI 的切块清单
-- `predictions/slide_predictions.csv`
-  - 每张 WSI 的最终标签
-- `reports/run_summary.json`
-  - 总耗时、平均耗时、WSI/s、tiles/s、总 tiles 等统计
+<details>
+<summary><strong>A1 纯推理基线</strong></summary>
 
-## 5. 当前实测结果
+`A1` 只测模型前向，不包含 WSI 读图与切块。
 
-## 5.1 WSI 正式 before / after
-
-### before
-
-- 结果目录：
-  - `logs/A3_output/submission_closure/official_runs/wsi_before_unified/`
-- 关键速度：
-  - `151.361294 s`
-  - `0.066067 WSI/s`
-
-### after
-
-- 正式选型：
-  - `logs/A3_output/submission_closure/optimization_rounds/wsi/04_after_om_acl_sync/`
-- 关键速度：
-  - `27.607040 s`
-  - `0.362226 WSI/s`
-  - `82.949856 tiles/s`
-- 相对 before：
-  - `5.713409x` 加速
-  - 耗时下降 `82.497316%`
-
-## 5.2 WSI 本地代理评测
-
-- before：
-  - `logs/A3_output/E_phase/tileagg_cv_L1_s448_uniStage1p5_topk16_v1/cv_summary_mean_std.csv`
-- after：
-  - `logs/A3_output/submission_closure/proxy_eval/wsi_after_om_origin_nw8_cv/cv_summary_mean_std.csv`
-
-结果：
-
-- `exact_match = 1.0 -> 1.0`
-- `macro_f1 = 0.933333 -> 0.933333`
-- 精度损失：`0.0` 个百分点
-
-## 5.3 Photos 代理评测
-
-### 严格 before
-
-- 目录：
-  - `logs/A3_output/submission_closure/proxy_eval/photos_before_pytorch_strict_cv/`
-- 结果：
-  - `ACC = 0.92`
-  - `macro_f1 = 0.919118`
-  - `ovr_auc = 0.990958`
-
-### 补充型 after
-
-- 目录：
-  - `logs/A3_output/submission_closure/proxy_eval/photos_after_om_origin/`
-- 结果：
-  - `ACC = 0.945`
-  - `macro_f1 = 0.944514`
-  - `ovr_auc = 0.996375`
-
-注意：
-
-- 这组 `0.945` 不是严格的每折一一配对 after 结果
-- 它只能说明：
-  - `Photos OM` 路径能跑
-  - 结果可用
-- 不能直接拿来当“加速后精度提高了 2.5 个百分点”的正式答辩结论
-
-## 5.4 离线模型对齐
-
-### WSI ONNX
-
-- 文件：
-  - `logs/A3_output/submission_closure/offline_models/wsi/wsi_onnx_parity_summary.json`
-- 结果：
-  - `feature_cosine_mean = 1.0`
-  - `logit_cosine_mean = 1.0`
-  - `prob_max_abs_diff = 8.642673492431641e-07`
-
-### WSI OM(origin)
-
-- 文件：
-  - `logs/A3_output/submission_closure/offline_models/wsi/wsi_om_parity_summary_origin.json`
-- 结果：
-  - `feature_cosine_mean = 0.999975323677063`
-  - `logit_cosine_mean = 0.9999200105667114`
-  - `prob_max_abs_diff = 0.004311233758926392`
-
-### Photos OM(origin)
-
-- 文件：
-  - `logs/A3_output/submission_closure/offline_models/photos/photos_om_parity_summary_origin.json`
-- 结果：
-  - `feature_cosine_mean = 0.9999548196792603`
-  - `logit_cosine_mean = 0.9997665882110596`
-  - `prob_max_abs_diff = 0.005356550216674805`
-
-## 6. 纯推理数字与全流程数字不要混写
-
-这是答辩时最容易说乱的一点。
-
-### 6.1 纯前向 patch/s
-
-- A1 `PyTorch FP16` 纯 backbone 基线：
-  - `972.868762 patch/s`
-- 当前正式可用 `OM(origin)` 纯前向：
-  - 约 `171.34 patch/s`
-- 旧 `fp16 OM` 纯前向：
-  - 约 `618.48 patch/s`
-  - 但结果出现 `NaN`，不能正式使用
-
-### 6.2 WSI 全流程速度
-
-当前正式提交更应该强调的是：
-
-- `WSI/s`
-- `tiles/s`
-- `总耗时`
-
-因为赛题评测不是只看 encoder 空跑，还包含：
-
-- WSI 读图
-- 切块
-- 过滤组织
-- 数据搬运
-- 编码器推理
-- slide 级聚合
-- 结果落盘
-
-所以：
-
-- `972.87 patch/s` 不能直接和 `82.95 tiles/s` 做一一等价比较
-- 两者量纲和链路范围不同
-
-## 7. 常见问题
-
-### 7.1 输入图片放哪
-
-放在：
-
-- `<你的根目录>/input/`
-
-WSI 支持：
-
-- `svs`
-- `tif`
-- `tiff`
-
-### 7.2 output 在哪
-
-取决于你命令里的 `--out_dir`。
-
-如果你按推荐命令跑：
-
-- before 输出在：
-  - `<你的根目录>/output_before/`
-- after 输出在：
-  - `<你的根目录>/output_after/`
-
-### 7.3 根目录名字不一样会不会有影响
-
-没有本质影响。
-
-只要下面这些相对结构还在：
-
-- `src/A3`
-- `logs/A3_output`
-- `_vendor`
-- `input`
-
-就可以。
-
-### 7.4 tile、patch、ViT patch size 到底什么关系
-
-当前工程里：
-
-- 一张 WSI 裁出的 `tile`
-- 送进模型的一张 `patch` 输入
-
-这两件事在工程口径里基本可以看成同一个 `224 x 224` 图块。
-
-而 `ViT patch16` 里的 `16`
-
-- 是模型内部把 `224 x 224` 再切成更小 token patch 的网络结构参数
-- 不是你在 WSI 外部切块时用的 tile 大小
-
-### 7.5 为什么官方测试集没有 ACC
-
-因为官方 `TestDataset` 没有标签。  
-所以只能输出：
-
-- 速度
-- 预测结果
-- 特征文件
-
-真实 ACC 由组委会统一环境跑完后得到。
-
-### 7.6 为什么 thumbnails 不能当答案
-
-因为它只是缩略图，不是官方标签文件。  
-最多用来人工观察，不能拿来复核 ACC。
-
-## 8. 最终建议同步目录
-
-如果你要把当前正式方案同步到另一台昇腾服务器，至少带上：
-
-- `src/A3/`
-- `_vendor/`
-- `logs/A3_output/C_phase/stage1p5_uni_large_L1_s448_mt40_random_v1/best.pt`
-- `logs/A3_output/E_phase/tileagg_thresholds_L1_s448_uniStage1p5_v1.json`
-- `logs/A3_output/submission_closure/optimization_stepwise/01_mixed_float16_keep_dtype_modify_mixlist/artifacts/refined_attn_score_path_norm1/`
-- `tmp/data-set/README_DEPLOY.md`
-- `tmp/data-set/install_requirements.sh`
-- `tmp/data-set/env_check.sh`
-- `tmp/data-set/run_before.sh`
-- `tmp/data-set/run_after.sh`
-
-如果直接使用已经准备好的挂载目录，则优先使用：
-
-- `/data/demo/data-set/`
-
-## 9. BRACS 外部多标签验证补充
-
-为了避免只看 BACH `A01~A10` 的本地代理结果过于乐观，额外下载并验证了 `20` 张带真实 `ROI` 分布标注的 `BRACS` 测试 WSI。
-
-外部验证口径：
-
-- 真值来源：`BRACS.xlsx` 的 `WSI_with_RoI_Distribution`
-- 4 类折叠规则：
-  - `Normal = N > 0`
-  - `Benign = PB > 0 or UDH > 0`
-  - `InSitu = FEA > 0 or ADH > 0 or DCIS > 0`
-  - `Invasive = IC > 0`
-- 指标：
-  - 多标签 `exact_match`
-  - `macro_f1`
-  - `sample_f1`
-
-关键结果：
-
-| 口径 | before | after |
-| --- | ---: | ---: |
-| 默认阈值 exact_match | 0.30 | 0.30 |
-| 默认阈值 macro_f1 | 0.6883 | 0.6883 |
-| tuned 阈值 exact_match | 0.45 | 0.45 |
-| tuned 阈值 macro_f1 | 0.8551 | 0.8551 |
-
-速度结果：
-
-| 方案 | 总耗时(s) | WSI/s | tiles/s |
+| 精度 | 最优 Batch | 吞吐(patch/s) | 延迟(ms/patch) |
 | --- | ---: | ---: | ---: |
-| before | 483.1228 | 0.0414 | 19.2022 |
-| after | 440.4347 | 0.0454 | 21.0633 |
+| FP32 | 48 | 427.6829 | 2.3382 |
+| FP16(AMP) | 96 | 972.8688 | 1.0279 |
 
-结论：
+- 纯前向最优甜点值是 `bs=96 + FP16(AMP)`
+- 相对 FP32 纯前向加速 `2.2747x`
+- 这组结果说明了 NPU 编码器本身有明显的 batch 甜点值
 
-- `after` 相比 `before` 在这 `20` 张外部 WSI 上快约 `9.69%`
-- 默认阈值下，`before/after` 的逐张 `pred_labels` 完全一致
-- 仅靠阈值搜索即可把 `exact_match` 从 `0.30` 提升到 `0.45`
-- 但该阈值搜索是在同一批 `20` 张上完成的，属于外部分析参考，不直接替换正式提交阈值
+</details>
 
-可复查目录：
+<details>
+<summary><strong>A2 Photos 端到端链路</strong></summary>
 
-- `BRACS/subset20_test_balanced/eval_runs/bracs20_roi_eval_v1/`
-- 其中包含：
-  - `bracs_truth_multilabel.csv`
-  - `bracs_roi_multilabel_eval.csv`
-  - `bracs_roi_multilabel_eval_summary.json`
-  - `bracs_roi_multilabel_eval_report.md`
-  - `before_tuned_thresholds.json`
-  - `after_tuned_thresholds.json`
+`A2` 用 `Photos` 任务验证“端到端吞吐不只取决于 NPU 前向”。
 
-## 10. 最终建议同步目录
+| 轮次 | 代表配置 | overall tile/s | steady tile/s |
+| --- | --- | ---: | ---: |
+| baseline | `w6_pf4_bs96` 类基线 | 407.0671 | 432.2236 |
+| 第一轮最优 | `w16_pf4_bs96` | 425.7986 | 471.8586 |
+| v3 最优 | `w4_pf6_bs96` | 440.46 | 571.21 |
 
-如果你要把当前正式方案同步到另一台昇腾服务器，至少带上：
+- `A2` 的主要收益来自 CPU 侧读图、预处理、预取和 batch 组织优化
+- 这也是为什么后续 `A3` 不会机械地只盯住单次前向速度
 
-- `src/A3/`
-- `_vendor/`
-- `logs/A3_output/C_phase/stage1p5_uni_large_L1_s448_mt40_random_v1/best.pt`
-- `logs/A3_output/E_phase/tileagg_thresholds_L1_s448_uniStage1p5_v1.json`
-- `logs/A3_output/submission_closure/optimization_stepwise/01_mixed_float16_keep_dtype_modify_mixlist/artifacts/refined_attn_score_path_norm1/`
-- `tmp/data-set/README_DEPLOY.md`
-- `tmp/data-set/install_requirements.sh`
-- `tmp/data-set/env_check.sh`
-- `tmp/data-set/run_before.sh`
-- `tmp/data-set/run_after.sh`
+</details>
 
-如果直接使用已经准备好的迁移包，则优先使用：
+<details>
+<summary><strong>A3 WSI 正式提交闭环</strong></summary>
 
-- 解包源：
-  - `/data/demo/data-set.tar`
-- 当前工作区内的未压缩目录：
-  - `/home/ma-user/work/uni_run/tmp/data-set/`
+`A3` 是本项目真正的正式主线，核心是：
 
-简短总结：
+- 用 `A01~A10 + XML` 构建 WSI 训练与代理评测口径
+- 训练 1 个正式 WSI patch encoder
+- 固定阈值和聚合逻辑
+- 做 `before / after` 统一入口、统一输出、统一测速和统一代理评测
 
-- 当前正式提交件已经冻结为 `before(PyTorch eager)` 与 `after(mixed OM attn_score_path_norm1)`。
-- 当前正式 after 在官方 10 张无标签测试 WSI 上达到 `90.6551 tiles/s`、`0.395874 WSI/s`，相对 before 提速 `6.2441x`，本地代理精度损失 `0.0` 个百分点。
-- 在外部 `BRACS 20` 张多标签验证上，after 相对 before 继续保持 `0` 精度差，同时速度提升约 `9.69%`。
-- 现在已经支持 `svs / tif / tiff` 输入，并且部署根目录名字可以自由更换，只要内部结构不乱即可。
+当前最重要文件：
+
+- tile 清单来源：`data/BACH/derived/split/wsi_train_tiles_L1_s448_mt40.csv`（历史训练数据路径，不随当前仓库上传）
+- 正式 encoder：[`logs/A3_output/C_phase/stage1p5_uni_large_L1_s448_mt40_random_v1/best.pt`](./logs/A3_output/C_phase/stage1p5_uni_large_L1_s448_mt40_random_v1/best.pt)
+- 正式阈值：[`logs/A3_output/E_phase/tileagg_thresholds_L1_s448_uniStage1p5_v1.json`](./logs/A3_output/E_phase/tileagg_thresholds_L1_s448_uniStage1p5_v1.json)
+- 统一入口：[`src/A3/scripts/run_submission_infer.py`](./src/A3/scripts/run_submission_infer.py)
+
+</details>
+
+<details>
+<summary><strong>A4 高级优化与备选路线</strong></summary>
+
+`A4` 主要负责离线化、混合精度、剪枝、蒸馏、外部验证等高级优化收口。
+
+已完成并能诚实写进结果页的内容：
+
+- `ONNX` 导出与对齐
+- `OM(origin)` 导出与对齐
+- `mixed OM(attn_score_path_norm1)` 稳定性收口
+- mixed OM 官方整目录测速
+- mixed OM 本地代理评测
+- `5%` 结构化剪枝的导出、对齐、官方测速与代理复核
+- `BRACS 20` 外部多标签验证
+
+仍属于预研或未形成正式提交产物的内容：
+
+- `AIPP`
+- `INT8 / PTQ / QAT`
+- 当前蒸馏 student 主线替代
+
+</details>
+
+## 交付材料
+
+### 最终交付目录
+
+[`天津工业大学+我们能拿奖/`](./天津工业大学+我们能拿奖/)
+
+其中包含：
+
+| 材料 | 位置 | 说明 |
+| --- | --- | --- |
+| 部署说明 | [`模型部署步骤说明/`](./天津工业大学+我们能拿奖/模型部署步骤说明/) | 服务器迁移、依赖安装、输入输出约定 |
+| 过程报告 | [`思路和过程报告/`](./天津工业大学+我们能拿奖/思路和过程报告/) | 用于答辩、追溯和补充说明 |
+| 最小运行包 | [`最小可运行模型/`](./天津工业大学+我们能拿奖/最小可运行模型/) | 最终打包交付镜像 |
+| 最终 PDF / PPT / DOCX | `天津工业大学 我们能拿奖 推理加速设计方案.*` | 最终汇报材料 |
+
+### 最小运行包
+
+当前仓库中有两份同类最小运行包：
+
+- 根目录镜像包：[`data-set-minimal.tar.gz`](./data-set-minimal.tar.gz)
+- 交付目录镜像包：[`天津工业大学+我们能拿奖/最小可运行模型/data-set-minimal.tar.gz`](./天津工业大学+我们能拿奖/最小可运行模型/data-set-minimal.tar.gz)
+
+包内核心结构为：
+
+```text
+data-set/
+├── input/
+├── output/
+├── src/A3/
+├── logs/A3_output/
+├── _vendor/
+├── RUN_ME_FIRST.md
+├── run_wsi_before.sh
+└── run_wsi_after.sh
+```
+
+最小包默认模型：
+
+- `before`：`PyTorch checkpoint`
+- `after`：`mixed OM(attn_score_path_norm1)`
+
+## 口径说明与常见问题
+
+### 1. 官方 TestDataset 能不能算真实 ACC？
+
+不能。
+
+- 官方 `TestDataset` 无标签
+- 它只能用于：
+  - 推理速度测试
+  - 最终预测结果输出
+  - 特征导出
+
+### 2. README 里的 `exact_match = 1.0` 指什么？
+
+它指的是 **本地代理评测口径**，不是官方无标签测试集真实精度。
+
+- 数据来源是 `A01~A10 + XML`
+- 指标来源是 slide 级多标签代理评测
+- 当前 `before / after / mixed OM / origin OM` 在这个代理口径下都保持 `exact_match = 1.0`
+
+### 3. 为什么 A1 最优 batch 是 `96`，但离线模型工件大多叫 `bs64`？
+
+因为两者回答的是**不同问题**：
+
+- `A1 bs=96` 结论来自“纯编码器前向 benchmark”
+- `A3/A4 bs64` 是离线导出、对齐、统一入口和端到端交付收口时固定下来的工件 shape
+- 端到端真实瓶颈不只在 NPU 前向，还包含 WSI 扫描、切块、预处理、缓存与数据组织
+
+也就是说：
+
+- `bs=96` 证明了纯前向甜点值
+- `bs=64` 则是当前正式交付链实际收口下来的可复现工件规格
+
+### 4. 为什么有些旧报告还写的是 `origin OM`？
+
+因为仓库里保留了完整的过程留痕。
+
+较早阶段的文件，例如：
+
+- [`logs/A3_output/submission_closure/reports/05_before_after速度与精度对比报告.md`](./logs/A3_output/submission_closure/reports/05_before_after速度与精度对比报告.md)
+- [`logs/A3_output/submission_closure/reports/06_最终提交材料汇总报告.md`](./logs/A3_output/submission_closure/reports/06_最终提交材料汇总报告.md)
+- [`logs/A3_output/submission_closure/optimization_rounds/wsi/rounds_summary.csv`](./logs/A3_output/submission_closure/optimization_rounds/wsi/rounds_summary.csv)
+
+记录的是 `mixed OM` 收口前的阶段状态。
+
+当前正式口径请以以下文件为准：
+
+- [`src/A3/bach_mil/runtime/submission_defaults.py`](./src/A3/bach_mil/runtime/submission_defaults.py)
+- [`analyse.md`](./analyse.md)
+- [`README-process.md`](./README-process.md) 末尾更新章节
+- [`logs/A3_output/submission_closure/optimization_rounds/wsi/07_after_om_mixed_attn_score_path_norm1/run/reports/run_summary.json`](./logs/A3_output/submission_closure/optimization_rounds/wsi/07_after_om_mixed_attn_score_path_norm1/run/reports/run_summary.json)
+
+### 5. `Photos after = 0.945 ACC` 能直接拿来当 before/after 精度对比吗？
+
+不能直接这么写。
+
+- 这组结果只能作为“离线后端可运行的补充代理结果”
+- 它不是严格配对的 `before / after` 正式精度口径
+- 当前正式对外精度说明应优先使用 `WSI` 本地代理评测结果
+
+## 推荐阅读顺序
+
+- 结果总表：[`analyse.md`](./analyse.md)
+- 过程长文：[`README-process.md`](./README-process.md)
+- 最终部署说明：[`模型部署步骤说明.md`](./天津工业大学+我们能拿奖/模型部署步骤说明/模型部署步骤说明.md)
+- 交付版过程镜像：[`思路和过程报告/README.md`](./天津工业大学+我们能拿奖/思路和过程报告/README.md)
+- 赛题约束理解：[`赛题三具体评测要求（必看）.md`](<./赛题三具体评测要求（必看）.md>)
+
+## 结论
+
+截至当前仓库状态，项目已经从“实验堆积”收口为一条清晰的正式交付链：
+
+- `before` 是 `PyTorch eager`
+- `after` 是 `mixed OM(attn_score_path_norm1)`
+- 正式主任务是 `WSI 多标签分类`
+- 正式测速、代理评测、最小运行包、部署说明和答辩材料都已形成闭环
+
+如果后续只做答辩、展示、部署或迁移，优先围绕这条主线展开，不再把早期 `origin OM`、旧版 `Photos` 指标和阶段性草稿混在首页口径里。
