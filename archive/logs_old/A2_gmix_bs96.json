@@ -1,0 +1,41 @@
+{
+  "config": {
+    "file_list": "data/BACH/derived/split/photos_test_all.txt",
+    "ckpt_dir": "assets/ckpts/UNI",
+    "tile": 224,
+    "stride": 224,
+    "bs": 96,
+    "global_mix": 1,
+    "white_thr": 1.01,
+    "precision": "fp16",
+    "cpu_out_fp16": true,
+    "cpu_workers": 12,
+    "decode_workers": 3,
+    "pre_workers": 9,
+    "decode_prefetch": 4,
+    "prefetch": 4,
+    "warmup_mode": "async",
+    "warmup_iters": 3,
+    "skip_steady": 1,
+    "max_images": -1,
+    "out_tsv": "logs/A2_gmix_bs96.tsv"
+  },
+  "result": {
+    "tiles_total": 5400,
+    "num_images": 100,
+    "total_time_s": 13.250379465520382,
+    "overall_tile_s": 407.53549844000077,
+    "overall_img_s": 7.546953674814829,
+    "steady_tile_s": 429.0029167808497,
+    "steady_img_s": 7.944498458904625,
+    "cold_first_ms": 1862.993784248829,
+    "warmup_sync_ms": 5283.740535378456,
+    "mean_decode_compute_ms": 176.95450760424137,
+    "mean_tile_compute_ms": 5.06368912756443,
+    "mean_decode_wait_ms": 15.780574306845665,
+    "mean_pre_ms": 162.50081218779087,
+    "mean_submit_ms": 30.178302228450775,
+    "mean_sync_wait_ms": 30.53392991423607,
+    "mean_total_ms": 421.0118153691292
+  }
+}

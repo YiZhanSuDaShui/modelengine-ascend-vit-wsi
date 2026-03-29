@@ -1,0 +1,21 @@
+# 超大数据文件（超过 GitHub 100MB 限制）
+data-set-minimal.tar.gz
+天津工业大学+我们能拿奖.zip
+
+# 超大模型权重（通过 GitHub Release 上传）
+assets/ckpts/hf/hub/model.safetensors
+assets/ckpts/UNI/pytorch_model.bin
+
+# 不需要上传的文件夹
+00无需上传github等/
+.codex/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 系统文件
+Thumbs.db
+.DS_Store
+desktop.ini

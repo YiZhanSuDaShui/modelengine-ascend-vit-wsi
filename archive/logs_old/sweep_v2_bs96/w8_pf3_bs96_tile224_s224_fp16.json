@@ -1,0 +1,39 @@
+{
+  "config": {
+    "file_list": "data/BACH/derived/split/photos_test_all.txt",
+    "tile": 224,
+    "stride": 224,
+    "bs": 96,
+    "white_thr": 1.01,
+    "precision": "fp16",
+    "cpu_out_fp16": true,
+    "cpu_workers": 8,
+    "decode_workers": 2,
+    "pre_workers": 6,
+    "decode_prefetch": 4,
+    "prefetch": 3,
+    "warmup_mode": "async",
+    "warmup_iters": 3,
+    "skip_steady": 1,
+    "max_images": -1,
+    "out_tsv": "logs/sweep_v2_bs96/w8_pf3_bs96_tile224_s224_fp16.tsv"
+  },
+  "result": {
+    "tiles_total": 5400,
+    "num_images": 100,
+    "total_time_s": 25.653102584183216,
+    "overall_tile_s": 210.5008539329448,
+    "overall_img_s": 3.8981639617212,
+    "steady_tile_s": 273.44338896409147,
+    "steady_img_s": 5.063766462297989,
+    "cold_first_ms": 6007.843621075153,
+    "warmup_sync_ms": 4021.8766629695892,
+    "mean_decode_compute_ms": 95.89677326381207,
+    "mean_tile_compute_ms": 3.476686328649521,
+    "mean_decode_wait_ms": 14.712807834148407,
+    "mean_pre_ms": 134.4406372308731,
+    "mean_submit_ms": 34.042861238121986,
+    "mean_sync_wait_ms": 31.700673401355743,
+    "mean_total_ms": 255.58508276939392
+  }
+}
