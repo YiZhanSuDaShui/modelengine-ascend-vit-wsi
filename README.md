@@ -15,7 +15,7 @@
 
 [![分析总表](https://img.shields.io/badge/分析总表-analyse.md-0969DA?style=flat-square)](./analyse.md)
 [![过程文档](https://img.shields.io/badge/过程文档-README--process.md-8250DF?style=flat-square)](./README-process.md)
-[![部署说明](https://img.shields.io/badge/部署说明-模型部署步骤说明-1F6FEB?style=flat-square)](./天津工业大学+我们能拿奖/模型部署步骤说明/模型部署步骤说明.md)
+[![部署说明](https://img.shields.io/badge/部署说明-模型部署步骤说明-1F6FEB?style=flat-square)](./最终提交材料/模型部署步骤说明/模型部署步骤说明.md)
 [![最小运行包](https://img.shields.io/badge/最小运行包-data--set--minimal.tar.gz-2DA44E?style=flat-square)](./data-set-minimal.tar.gz)
 
 </div>
@@ -161,7 +161,7 @@ python3 src/A3/scripts/run_submission_infer.py \
 1. 先看本 README，确定当前正式交付口径
 2. 再看 [`analyse.md`](./analyse.md)，快速了解 A1~A4 的关键数据
 3. 如需追溯历史过程，再看 [`README-process.md`](./README-process.md)
-4. 如需迁移到服务器运行，看 [`模型部署步骤说明.md`](./天津工业大学+我们能拿奖/模型部署步骤说明/模型部署步骤说明.md)
+4. 如需迁移到服务器运行，看 [`模型部署步骤说明.md`](./最终提交材料/模型部署步骤说明/模型部署步骤说明.md)
 
 ### 当前目录分工
 
@@ -172,7 +172,7 @@ python3 src/A3/scripts/run_submission_infer.py \
 ├── logs/
 │   ├── A3_output/                  # A3/A4 主线权重、测速、对齐、报告
 │   └── sweep_v3/                   # A2 端到端吞吐 sweep 日志
-├── 天津工业大学+我们能拿奖/          # 最终交付材料汇总目录
+├── 最终提交材料/          # 最终交付材料汇总目录
 │   ├── 模型部署步骤说明/
 │   ├── 思路和过程报告/
 │   └── 最小可运行模型/
@@ -262,23 +262,23 @@ python3 src/A3/scripts/run_submission_infer.py \
 
 ### 最终交付目录
 
-[`天津工业大学+我们能拿奖/`](./天津工业大学+我们能拿奖/)
+[`最终提交材料/`](./最终提交材料/)
 
 其中包含：
 
 | 材料 | 位置 | 说明 |
 | --- | --- | --- |
-| 部署说明 | [`模型部署步骤说明/`](./天津工业大学+我们能拿奖/模型部署步骤说明/) | 服务器迁移、依赖安装、输入输出约定 |
-| 过程报告 | [`思路和过程报告/`](./天津工业大学+我们能拿奖/思路和过程报告/) | 用于答辩、追溯和补充说明 |
-| 最小运行包 | [`最小可运行模型/`](./天津工业大学+我们能拿奖/最小可运行模型/) | 最终打包交付镜像 |
-| 最终 PDF / PPT / DOCX | `天津工业大学 我们能拿奖 推理加速设计方案.*` | 最终汇报材料 |
+| 部署说明 | [`模型部署步骤说明/`](./最终提交材料/模型部署步骤说明/) | 服务器迁移、依赖安装、输入输出约定 |
+| 过程报告 | [`思路和过程报告/`](./最终提交材料/思路和过程报告/) | 用于答辩、追溯和补充说明 |
+| 最小运行包 | [`最小可运行模型/`](./最终提交材料/最小可运行模型/) | 最终打包交付镜像 |
+| 最终 PDF / PPT / DOCX | `华为ICT最终提交材料-我们能拿奖团队 推理加速设计方案.*` | 最终汇报材料 |
 
 ### 最小运行包
 
 当前仓库中有两份同类最小运行包：
 
 - 根目录镜像包：[`data-set-minimal.tar.gz`](./data-set-minimal.tar.gz)
-- 交付目录镜像包：[`天津工业大学+我们能拿奖/最小可运行模型/data-set-minimal.tar.gz`](./天津工业大学+我们能拿奖/最小可运行模型/data-set-minimal.tar.gz)
+- 交付目录镜像包：[`最终提交材料/最小可运行模型/data-set-minimal.tar.gz`](./最终提交材料/最小可运行模型/data-set-minimal.tar.gz)
 
 包内核心结构为：
 
@@ -363,8 +363,8 @@ data-set/
 
 - 结果总表：[`analyse.md`](./analyse.md)
 - 过程长文：[`README-process.md`](./README-process.md)
-- 最终部署说明：[`模型部署步骤说明.md`](./天津工业大学+我们能拿奖/模型部署步骤说明/模型部署步骤说明.md)
-- 交付版过程镜像：[`思路和过程报告/README.md`](./天津工业大学+我们能拿奖/思路和过程报告/README.md)
+- 最终部署说明：[`模型部署步骤说明.md`](./最终提交材料/模型部署步骤说明/模型部署步骤说明.md)
+- 交付版过程镜像：[`思路和过程报告/README.md`](./最终提交材料/思路和过程报告/README.md)
 - 赛题约束理解：[`赛题三具体评测要求（必看）.md`](<./赛题三具体评测要求（必看）.md>)
 
 ## 结论
